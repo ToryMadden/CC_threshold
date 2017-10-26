@@ -57,38 +57,64 @@ df30 <- df30 %>% mutate(id = 30)
 
 df_all <- rbind(df8, df9, df10, df11, df12, df14, df15, df16, df17, df19, df21, df22, df23, df24, df25, df26, df27, df28, df29, df30)
 
-df_all %<>% select(id,
-                   phase,
-                   block.number,
-                   trial.number,
-                   is_CSplus,
-                   is_CSmin,
-                   do_pulse1,
-                   do_pulse3,
-                   rating,
-                   button,
-                   rating_time,
-                   button_time)
-                   do_pulse5)
-
 df_all %<>% rename(block_number = block.number,
                    trial_number = trial.number)
 
-#START HERE
+df_all %<>% mutate(CS = ifelse(is_CSplus == 1,
+                               yes = "CSplus",
+                               no = ifelse(is_CSmin == 1,
+                                           yes = "CSminus",
+                                           no = NA)))
 
-df_all %<>% mutate(block_number = ifelse(block_number = 2,
-                                         yes = 1,
-                                         no = ifelse(block_number = 4,
-                                                yes = 2,
-                                                no = ifelse(block_number = 7,
-                                                   yes = 3,
-                                                   no = ifelse(block_number = 10,
-                                                          yes = 4,
-                                                          no = ifelse(block_number = 13,
-                                                                 yes = 5,
-                                                                 no = ifelse(block_number = 16,
-                                                                        yes = 6,
-                                                                        no = 7)))))))
+df_all %<>% mutate(US = ifelse(do_pulse1 == 1,
+                               yes = "low",
+                               no = ifelse(do_pulse3 == 1,
+                                           yes = "test",
+                                           no = ifelse(do_pulse5 == 1,
+                                                       yes = "high",
+                                                       no = NA))))
+
+df_all %<>% mutate(tactor_active = ifelse(do_tactor1 == 1,
+                                          yes = 1,
+                                          no = ifelse(do_tactor2 == 1,
+                                                      yes = 2,
+                                                      no = ifelse(do_tactor3 == 1,
+                                                      yes = 3,
+                                                      no = NA))))
+
+df_all %<>% mutate(button_correct = ifelse(button == tactor_active,
+                                          yes = "correct",
+                                          no = "incorrect"))
+
+df_all %<>% mutate(button_choice = ifelse(button == 1,
+                                          yes = "above",
+                                          no = ifelse(button == 2,
+                                                      yes = "below",
+                                                      no = NA)))
+
+df_all %<>% mutate(block_number = ifelse(block_number == 2,
+                                         yes = "baseline",
+                                         no = ifelse(block_number == 4,
+                                                yes = "acq1",
+                                                no = ifelse(block_number == 7,
+                                                   yes = "acq2",
+                                                   no = ifelse(block_number == 10,
+                                                          yes = "acq3",
+                                                          no = ifelse(block_number == 13,
+                                                                 yes = "test1",
+                                                                 no = ifelse(block_number == 16,
+                                                                        yes = "test2",
+                                                                        no = "test3")))))))
+
+df_all %<>% select(id,
+                   block_number,
+                   trial_number,
+                   CS, 
+                   US, 
+                   rating,
+                   rating_time,
+                   button_correct,
+                   button_time)
 
 # Save outputs
 
