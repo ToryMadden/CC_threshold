@@ -28,10 +28,22 @@ df_10HL <- readxl::read_excel('/Users/tory/Google Drive/Git/CC_threshold/Tory_CC
 data <- rbind(df_01SH, df_02BM, df_03CF, df_04WW, df_05JG, df_06RK, df_07AF, df_08DR, df_09CD, df_10HL)
 
 df_all <- data %>% mutate(trial_type = case_when(
-                   Trial_type == "head" & Csplus_location == "head" ~ "CSplus_only",
-                   Trial_type == "head" & Csplus_location == "feet" ~ "CSminus_only",
-                   Trial_type == "feet" & Csplus_location == "feet" ~ "CSplus_only",
-                   Trial_type == "feet" & Csplus_location == "head" ~ "CSminus_only",
+                   Trial_type == "head" & Csplus_location == "head" & block_type == "baseline" 
+                   ~ "CSplus_only",
+                   Trial_type == "head" & Csplus_location == "feet" & block_type == "baseline" 
+                   ~ "CSminus_only",
+                   Trial_type == "feet" & Csplus_location == "feet" & block_type == "baseline" 
+                   ~ "CSplus_only",
+                   Trial_type == "feet" & Csplus_location == "head" & block_type == "baseline" 
+                   ~ "CSminus_only",
+                   Trial_type == "head" & Csplus_location == "head" & block_type == "acquisition" 
+                   ~ "CSplus_UShigh",
+                   Trial_type == "head" & Csplus_location == "feet" & block_type == "acquisition" 
+                   ~ "CSminus_USlow",
+                   Trial_type == "feet" & Csplus_location == "feet" & block_type == "acquisition" 
+                   ~ "CSplus_UShigh",
+                   Trial_type == "feet" & Csplus_location == "head" & block_type == "acquisition" 
+                   ~ "CSminus_USlow",
                    Trial_type == "headONLY" & Csplus_location == "head" ~ "CSplus_only",
                    Trial_type == "headONLY" & Csplus_location == "feet" ~ "CSminus_only",
                    Trial_type == "HeadONLY" & Csplus_location == "head" ~ "CSplus_only",
@@ -52,7 +64,7 @@ df_all <- data %>% mutate(trial_type = case_when(
 # Save outputs
 
 write_rds(x = df_all, 
-          path = '/Users/tory/Google Drive/Git/CC_threshold/Tory_CC_laser_2015/data/FEST_ratings')
+          path = './Tory_CC_laser_2015/data/FEST_ratings.rds')
 write_csv(x = df_all,
-          path = '/Users/tory/Google Drive/Git/CC_threshold/Tory_CC_laser_2015/data/FEST_ratings')
+          path = './Tory_CC_laser_2015/data/FEST_ratings.csv')
 

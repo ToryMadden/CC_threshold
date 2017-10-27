@@ -15,12 +15,12 @@ library(ggplot2)
 
 # Import data
 
-df <- read_rds('./Juliane_Masters/data/Juliane_raw_FEST.rds')
+df <- read_rds(path = './Tory_CC_laser_2015/data/FEST_ratings.rds')
 
 # Plot ratings
 
 ggplot(data = df) +
-  aes(x = trial_no,
+  aes(x = trial,
       y = rating,
       colour = trial_type) +
   geom_point() +
@@ -35,7 +35,7 @@ ggplot(data = df) +
 df_test <- df %>% filter(trial_type == "CSplus_UStest" | trial_type == "CSminus_UStest")
 
 ggplot(data = df_test) +
-  aes(x = trial_no,
+  aes(x = trial,
       y = rating,
       colour = trial_type) +
   geom_point() +
@@ -59,17 +59,6 @@ ggplot(data = df_test) +
   labs(title = "Ratings of test stimuli according to actual trial type",
        subtitle = "Faceted by ID")
 
-ggplot(data = df_test) +
-  aes(x = as.factor(perc_trial_type),
-      y = rating,
-      colour = perc_trial_type) +
-  geom_jitter(height = 0) +
-  geom_boxplot() +
-  scale_colour_brewer(palette = "Set1") +
-  facet_wrap(~ id) +
-  labs(title = "Ratings of test stimuli according to perceived trial type",
-       subtitle = "Faceted by ID")
-
 df_test %>% filter(!is.na(trial_type)) %>%
 ggplot(data = .) +
   aes(x = as.factor(trial_type),
@@ -81,16 +70,16 @@ ggplot(data = .) +
   labs(title = "Ratings of test stimuli",
        subtitle = "According to actual trial type")
 
-df_test %>% filter(!is.na(perc_trial_type)) %>%
+df_test %>%
   ggplot(data = .) +
-  aes(x = as.factor(perc_trial_type),
+  aes(x = as.factor(trial_type),
       y = rating,
-      colour = perc_trial_type) +
+      colour = trial_type) +
   geom_jitter(height = 0) +
   geom_boxplot() +
   scale_colour_brewer(palette = "Set1") +
   labs(title = "Ratings of test stimuli",
-       subtitle = "According to perceived trial type")
+       subtitle = "According to actual trial type")
 
 # Prediction intervals for test trials as DELIVERED
 df_prediction <- df_test %>%
@@ -98,7 +87,7 @@ df_prediction <- df_test %>%
   filter(trial_type == 'CSminus_UStest' & id != 23) %>%
   # Calculate 95% prediction interval 
   group_by(id) %>%
-  dplyr::summarise(lower_pi = mean(rating, na.rm = TRUE) - 1.96 * (sd(rating, na.rm = TRUE)),
+  summarise(lower_pi = mean(rating, na.rm = TRUE) - 1.96 * (sd(rating, na.rm = TRUE)),
             upper_pi = mean(rating, na.rm = TRUE) + 1.96 * (sd(rating, na.rm = TRUE))) %>%
   # Truncate PIs at +50 and -50
   mutate(lower_pi = ifelse(lower_pi < -50,
@@ -132,57 +121,6 @@ ggplot(data = df_prediction) +
        y = 'FEST rating',
        x = 'Participant ID')
 
-# Prediction intervals for test trials as PERCEIVED
-
-id_19 <- df_test %>% filter(id == 19)
-
-plot(id_19$rating, id_19$trial_no)
-
-df_prediction_perc <- df_test %>%
-  filter(!is.na(perc_trial_type)) %>%
-  # Filter for CSminus_UStest
-  filter(perc_trial_type == 'CSminus_UStest' & id != 23 & id != 19) %>%
-  # Calculate 95% prediction interval 
-  group_by(id) %>%
-  summarise(lower_pi = mean(rating, na.rm = TRUE) - 1.96 * (sd(rating, na.rm = TRUE)),
-            upper_pi = mean(rating, na.rm = TRUE) + 1.96 * (sd(rating, na.rm = TRUE))) %>%
-  # Truncate PIs at +50 and -50
-  mutate(lower_pi = ifelse(lower_pi < -50,
-                           yes = -50,
-                           no = lower_pi),
-         upper_pi = ifelse(upper_pi > 50,
-                           yes = 50,
-                           no = upper_pi)) %>%
-  # Join back with df_test
-  left_join(df_test) %>%
-  # Is CSplus_UStest within the prediction interval
-  mutate(CC_effect = ifelse(rating > upper_pi,
-                            yes = 'yes',
-                            no = 'no')) %>%
-  # Filter for CSplus_UStest
-  filter(perc_trial_type == 'CSplus_UStest') 
-
-# Save file df_prediction_perc
-
-write_rds(x = df_prediction_perc,
-          path = './Juliane_Masters/data/Juliane_raw_as_perc.rds')
-
-ggplot(data = df_prediction_perc) +
-  aes(x = as.factor(id),
-      y = rating) +
-  geom_jitter(aes(colour = CC_effect),
-              height = 0) +
-  geom_errorbar(aes(ymin = lower_pi,
-                    ymax = upper_pi)) +
-  ylim(-50, 50) +
-  geom_hline(yintercept = 0, linetype = 2) +
-  scale_colour_brewer(palette = "Set1") +
-  coord_flip() +
-  labs(title = 'Prediction interval for ratings of trials perceived as CSminus_UStest ',
-       subtitle = 'Points are individual CSplus_UStest (percieved) trial ratings',
-       y = 'FEST rating',
-       x = 'Participant ID')
-
 # Prediction intervals for all reinforced (CS+/USH or CS-/USL) trials
 
 df_prediction_reinf <- df %>%
@@ -190,7 +128,7 @@ df_prediction_reinf <- df %>%
   filter(trial_type == 'CSminus_USlow' & id != 23) %>%
   # Calculate 95% prediction interval 
   group_by(id) %>%
-  dplyr::summarise(lower_pi = mean(rating, na.rm = TRUE) - 1.96 * (sd(rating, na.rm = TRUE)),
+  summarise(lower_pi = mean(rating, na.rm = TRUE) - 1.96 * (sd(rating, na.rm = TRUE)),
             upper_pi = mean(rating, na.rm = TRUE) + 1.96 * (sd(rating, na.rm = TRUE))) %>%
   # Truncate PIs at +50 and -50
   mutate(lower_pi = ifelse(lower_pi < -50,
@@ -224,4 +162,4 @@ ggplot(data = df_prediction_reinf) +
        y = 'FEST rating',
        x = 'Participant ID')
 
-# Calibration was poor.  However, participants 11, 15 and 26 have a prediction interval for their CS-/USlow trials that does not cross zero, and they also show no CC effect according to the previous plot.
+# Calibration was good for all except 05JG and 01SH.
