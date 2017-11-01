@@ -1,0 +1,257 @@
+---
+title: "Statistical power simulations"
+author: "Peter Kamerman and Tory Madden"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output: 
+    html_document:
+        theme: yeti
+        highlight: pygments
+        df_print: paged
+        toc: true
+        toc_float: true
+        code_folding: show
+---
+
+```{r setup, include = FALSE}
+# Load packages
+library(ggridges)
+library(magrittr)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(simr)
+
+# Set knitr options
+knitr::opts_chunk$set(warning = FALSE,
+                      message = FALSE,
+                      cache = TRUE,
+                      fig.align = 'center',
+                      fig.width = 8,
+                      fig.height = 8)
+```
+
+## Import data
+```{r import_data}
+df_base <- readr::read_rds('../Juliane_Masters/data/Juliane_raw.rds')
+```
+
+## Quick look
+```{r quick_look}
+dim(df_base)
+head(df_base)
+glimpse(df_base)
+```
+
+## Clean data
+```{r clean_data}
+df_base %<>%
+    # Filter for block_number == test*
+    filter(stringr::str_detect(block_number, 'test')) %>%
+    # Remove participant 23 (not included in test phase)
+    filter(id != 23) %>%
+    # Create new columns with stimulus type and block number
+    mutate(stimulus = paste0(CS, 'UStest'),
+           block_number = ifelse(block_number == 'test1',
+                                 yes = 1,
+                                 no = ifelse(block_number == 'test2',
+                                             yes = 2,
+                                             no = 3))) %>%
+    # Remove NA
+    filter(complete.cases(.)) %>%
+    # Recode rating (non-painful < 0, painful > 0)
+    mutate(painful = ifelse(rating > 0,
+                            yes = 'yes',
+                            no = 'no'),
+           painful = factor(painful)) %>%
+    # Select required columns
+    select(id, block_number, trial_number, stimulus, rating, painful)
+```
+
+## Plot original data
+### Scatter plot
+```{r scatter_plot}
+df_base %>%
+    mutate(id = factor(id),
+           painful = factor(painful),
+           stimulus = factor(stimulus)) %>%
+    ggplot(data = .) +
+    aes(x = rating,
+        y = id,
+        colour = stimulus,
+        fill = stimulus) +
+    geom_vline(xintercept = 0) +
+    geom_jitter(shape = 21,
+                alpha = 0.6,
+                width = 0) +
+    scale_colour_brewer(palette = 'Set1') +
+    labs(x = 'FEST rating',
+         y = 'Participant ID') +
+    theme_minimal(base_size = 14) +
+    theme(panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank())
+```
+
+### Joy plot
+```{r joy_plot}
+df_base %>%
+    mutate(id = factor(id),
+           painful = factor(painful),
+           stimulus = factor(stimulus)) %>%
+    ggplot(data = .) +
+    aes(x = rating,
+        y = id,
+        colour = stimulus,
+        fill = stimulus) +
+    geom_vline(xintercept = 0) +
+    geom_density_ridges() +
+    scale_colour_brewer(palette = 'Set1') +
+    labs(x = 'FEST rating',
+         y = 'Participant ID') +
+    theme_minimal(base_size = 14) +
+    theme(panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank())
+```    
+
+## Base model
+```{r base_model}
+# Create a model using the empirical data
+mod_base <- glmer(painful ~ stimulus + (1 | id),
+                 data = df_base,
+                 family = binomial)
+
+# Summarise model
+summary(mod_base)
+
+# Get 95% CI of the coefficients (log odds)
+confint(mod_base)
+
+# Get 95% CI of the odds ratio
+exp(confint(mod_base))
+```
+
+
+## Power simulations
+
+_"Observed power"_ is problematic, so instead of using the raw data (df_base), I took a random sample (with replacement) of 40 individuals from df_base, and re-build a dummy cohort from this sample.
+
+For the simulation process, I estimated statistical power over a range of sample sizes (5 to 40) over a range of effect sizes (log odds: 0.3, 0.6, 1.2, 2.4, 3.4). The upper limit of the effect sizes assessed corresponds to the upper limit of the 96% CI for the regression coefficient for _mod\_base_.
+
+### Create the dummy dataset
+```{r create_dataset}
+# Take a sample of df_base
+df_pwr <- df_base %>%
+    # Group and nest dataframe by id
+    group_by(id) %>%
+    nest() %>%
+    # Take a random sample of n = 40 with replacement
+    sample_n(size = 40,
+             replace = TRUE) %>%
+    # Relabel ids
+    mutate(id = 1:40) %>%
+    # Unnest dataframe
+    unnest() 
+```
+
+### Basic model 
+```{r basic_model_2}
+# Generate a model using df_pwr
+mod_pwr <- glmer(painful ~ stimulus + (1 | id),
+                 data = df_pwr,
+                 family = binomial)
+```
+
+
+### MODEL 1: effect size: 0.3
+```{r model_1}
+# Change effect size
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 0.3
+
+# Simulate power curve
+pwr_curve_0.3 <- powerCurve(fit = mod_pwr, 
+                            along = 'id',  
+                            seed = 1234,
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+
+# Print
+pwr_curve_0.3
+
+# Plot
+plot(pwr_curve_0.3)
+```
+
+### MODEL 2: effect size: 0.6
+```{r model_2}
+# Change effect size
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 0.6
+
+# Simulate power curve
+pwr_curve_0.6 <- powerCurve(fit = mod_pwr, 
+                            along = 'id', 
+                            seed = 1234,
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+
+# Print
+pwr_curve_0.6
+
+# Plot
+plot(pwr_curve_0.6)
+```
+
+### MODEL 3: effect size: 1.2
+```{r model_3}
+# Change effect size
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 1.2
+
+# Simulate power curve
+pwr_curve_1.2 <- powerCurve(fit = mod_pwr, 
+                            along = 'id',  
+                            seed = 1234,
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+
+# Print
+pwr_curve_1.2
+
+# Plot
+plot(pwr_curve_1.2)
+```
+
+### MODEL 5: effect size: 2.4
+```{r model_5}
+# Change effect size
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 2.4
+
+# Simulate power curve
+pwr_curve_2.4 <- powerCurve(fit = mod_pwr, 
+                            along = 'id',  
+                            seed = 1234,
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+
+# Print
+pwr_curve_2.4
+
+# Plot
+plot(pwr_curve_2.4)
+```
+
+### MODEL 5: effect size: 3.4
+```{r model_6}
+# Change effect size
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 3.4
+
+# Simulate power curve
+pwr_curve_3.4 <- powerCurve(fit = mod_pwr, 
+                            along = 'id',  
+                            seed = 1234,
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+
+# Print
+pwr_curve_3.4
+
+# Plot
+plot(pwr_curve_3.4)
+```
+
+## Session information
+```{r session_info}
+sessionInfo()
+```
