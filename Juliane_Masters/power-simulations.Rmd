@@ -14,12 +14,13 @@ output:
 
 ```{r setup, include = FALSE}
 # Load packages
-library(ggridges)
+library(DHARMa) # GLMM diagnostics
+library(ggridges) # Joy plots
 library(magrittr)
 library(tidyverse)
 library(lme4)
 library(lmerTest)
-library(simr)
+library(simr) # Power simulation
 
 # Set knitr options
 knitr::opts_chunk$set(warning = FALSE,
@@ -32,7 +33,7 @@ knitr::opts_chunk$set(warning = FALSE,
 
 ## Import data
 ```{r import_data}
-df_base <- readr::read_rds('../Juliane_Masters/data/Juliane_raw.rds')
+df_base <- readr::read_rds('./data/Juliane_raw.rds')
 ```
 
 ## Quick look
@@ -113,7 +114,30 @@ df_base %>%
 ```    
 
 ## Base model
-```{r base_model}
+
+The `simr` package works with GLMM outputs from the `lme4` package. I therefore compared the outputs from a Cochran-Mantel-Haenszel (CMH) chi-squared test (my prefered test in this case), to that of a GLMM using a _logit_ link. 
+
+### CMH test
+```{r cmh_test}
+# xtab data
+mod_tab <- xtabs(~ painful + stimulus + id, 
+                 data = df_base)
+
+# Inspect table
+ftable(mod_tab)
+
+# CMH test
+mod_cmh <- mantelhaen.test(x = mod_tab,
+                           exact = TRUE)
+
+# Pretty print
+broom::tidy(mod_cmh) %>%
+    knitr::kable(digits = 3,
+                 caption = 'CMH test of stimulus rating x stimulus x participant')
+```
+
+### Logistic regression
+```{r logit_model}
 # Create a model using the empirical data
 mod_base <- glmer(painful ~ stimulus + (1 | id),
                  data = df_base,
@@ -122,22 +146,37 @@ mod_base <- glmer(painful ~ stimulus + (1 | id),
 # Summarise model
 summary(mod_base)
 
-# Get 95% CI of the coefficients (log odds)
+# Get 95% CI of the fixed effect coefficients (log odds)
 confint(mod_base)
 
-# Get 95% CI of the odds ratio
+# Get 95% CI of the odds ratio for the fixed effect
 exp(confint(mod_base))
+
+# Diagnostics of model residuals using simulation (n = 1000)
+## Simulate residual distribution
+mod_diagnostics <- simulateResiduals(fittedModel = mod_base,
+                                     n = 1000)
+
+## Plot residuals 
+plotSimulatedResiduals(mod_diagnostics)
+
+## Formal test of residual uniformity 
+testUniformity(mod_diagnostics)
 ```
 
+I was happy with the logistic regression model, and proceeded with the power simulations.
 
 ## Power simulations
 
 _"Observed power"_ is problematic, so instead of using the raw data (df_base), I took a random sample (with replacement) of 40 individuals from df_base, and re-build a dummy cohort from this sample.
 
-For the simulation process, I estimated statistical power over a range of sample sizes (5 to 40) over a range of effect sizes (log odds: 0.3, 0.6, 1.2, 2.4, 3.4). The upper limit of the effect sizes assessed corresponds to the upper limit of the 96% CI for the regression coefficient for _mod\_base_.
+For the simulation process, I estimated statistical power over a range of sample sizes (5 to 40) over a range of small effect sizes (log odds: 0.1, 0.2, 0.4, 0.6, 0.8, 1.0).
 
 ### Create the dummy dataset
 ```{r create_dataset}
+# Set random seed
+set.seed(1234)
+
 # Take a sample of df_base
 df_pwr <- df_base %>%
     # Group and nest dataframe by id
@@ -152,7 +191,7 @@ df_pwr <- df_base %>%
     unnest() 
 ```
 
-### Basic model 
+### Basic logit model
 ```{r basic_model_2}
 # Generate a model using df_pwr
 mod_pwr <- glmer(painful ~ stimulus + (1 | id),
@@ -161,94 +200,99 @@ mod_pwr <- glmer(painful ~ stimulus + (1 | id),
 ```
 
 
-### MODEL 1: effect size: 0.3
+### MODEL 1: effect size: 0.1
 ```{r model_1}
 # Change effect size
-fixef(mod_pwr)["stimulusCSplusUStest"] <- 0.3
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 0.1
 
 # Simulate power curve
-pwr_curve_0.3 <- powerCurve(fit = mod_pwr, 
+pwr_curve_0.1 <- powerCurve(fit = mod_pwr, 
                             along = 'id',  
                             seed = 1234,
-                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40),
+                            progress = FALSE)
 
 # Print
-pwr_curve_0.3
+pwr_curve_0.1
 
 # Plot
-plot(pwr_curve_0.3)
+plot(pwr_curve_0.1)
 ```
 
-### MODEL 2: effect size: 0.6
+### MODEL 2: effect size: 0.2
 ```{r model_2}
 # Change effect size
-fixef(mod_pwr)["stimulusCSplusUStest"] <- 0.6
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 0.2
 
 # Simulate power curve
-pwr_curve_0.6 <- powerCurve(fit = mod_pwr, 
+pwr_curve_0.2 <- powerCurve(fit = mod_pwr, 
                             along = 'id', 
                             seed = 1234,
-                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40),
+                            progress = FALSE)
 
 # Print
-pwr_curve_0.6
+pwr_curve_0.2
 
 # Plot
-plot(pwr_curve_0.6)
+plot(pwr_curve_0.2)
 ```
 
-### MODEL 3: effect size: 1.2
+### MODEL 3: effect size: 0.4
 ```{r model_3}
 # Change effect size
-fixef(mod_pwr)["stimulusCSplusUStest"] <- 1.2
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 0.4
 
 # Simulate power curve
-pwr_curve_1.2 <- powerCurve(fit = mod_pwr, 
+pwr_curve_0.4 <- powerCurve(fit = mod_pwr, 
                             along = 'id',  
                             seed = 1234,
-                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40),
+                            progress = FALSE)
 
 # Print
-pwr_curve_1.2
+pwr_curve_0.4
 
 # Plot
-plot(pwr_curve_1.2)
+plot(pwr_curve_0.4)
 ```
 
-### MODEL 5: effect size: 2.4
+### MODEL 5: effect size: 0.8
 ```{r model_5}
 # Change effect size
-fixef(mod_pwr)["stimulusCSplusUStest"] <- 2.4
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 0.8
 
 # Simulate power curve
-pwr_curve_2.4 <- powerCurve(fit = mod_pwr, 
+pwr_curve_0.8 <- powerCurve(fit = mod_pwr, 
                             along = 'id',  
                             seed = 1234,
-                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40),
+                            progress = FALSE)
 
 # Print
-pwr_curve_2.4
+pwr_curve_0.8
 
 # Plot
-plot(pwr_curve_2.4)
+plot(pwr_curve_0.8)
 ```
 
-### MODEL 5: effect size: 3.4
+### MODEL 5: effect size: 1.0
 ```{r model_6}
 # Change effect size
-fixef(mod_pwr)["stimulusCSplusUStest"] <- 3.4
+fixef(mod_pwr)["stimulusCSplusUStest"] <- 1.0
 
 # Simulate power curve
-pwr_curve_3.4 <- powerCurve(fit = mod_pwr, 
+pwr_curve_1.0 <- powerCurve(fit = mod_pwr, 
                             along = 'id',  
                             seed = 1234,
-                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40))
+                            breaks = c(5, 10, 15, 20, 25, 30, 35, 40),
+                            progress = FALSE)
 
 # Print
-pwr_curve_3.4
+pwr_curve_1.0
 
 # Plot
-plot(pwr_curve_3.4)
+plot(pwr_curve_1.0)
 ```
 
 ## Session information
