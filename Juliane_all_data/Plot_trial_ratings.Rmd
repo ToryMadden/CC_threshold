@@ -1,0 +1,462 @@
+---
+title: "Juliane's Masters study: plot trial ratings from all participants"
+author: "Tory Madden"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output: 
+  html_document:
+    theme: yeti
+    hightlight: pygments
+    toc: true
+    toc_depth: 5
+    toc_float: true
+    code_folding: show
+---
+
+```{r setup, include = FALSE}
+# Load packages
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(RColorBrewer)
+library(ggplot2)
+
+# knitr setup
+knitr::opts_chunk$set(warning = FALSE,
+                      message = FALSE,
+                      fig.height = 8,
+                      fig.width = 8,
+                      fig.path = './figures/rating_plots/')
+```
+
+```{r data, include = FALSE}
+
+# Import data
+
+df <- read.csv('/Users/tory/Google Drive/Git/CC_threshold/Juliane_all_data/data/R_data_complete_dataset_ratings')
+```
+
+# Visualise ratings
+
+Here, we look at participant ratings in several different ways:
+1. Ratings provided by each participant over the course of the procedure
+2. Ratings provided by each participant of test (CS-UStest) trials only (therefore test phase only)
+3. Ratings for each participant, looking at CS-UStest pairings as:
+(a) delivered (ignoring any mis-localisation of CSs)
+(b) perceived (considering how each CS was classified by the participant).
+4. Ratings for all participants, looking at CS-UStest pairing as 
+(a) delivered (ignoring any mis-localisation of CSs)
+(b) perceived (considering how each CS was classified by the participant).
+
+## 1. Ratings provided by each participant over the course of the procedure
+Dashed vertical lines divide trials at the transitions between baseline, acquisition and test phases.
+```{r whole_proc_plots, include = TRUE}
+
+# Plot ratings
+
+df_test <- df %>% filter(trial_type == "CSplus_UStest" | trial_type == "CSminus_UStest")
+
+df_plot1 <- df %>% filter(id < 23)
+df_plot2 <- df %>% filter(id > 23 & id < 42)
+df_plot3 <- df %>% filter(id > 41 & id < 64)
+df_plot4 <- df %>% filter(id > 64)
+
+ggplot(data = df_plot1) +
+  aes(x = trial_no,
+      y = rating,
+      colour = trial_type) +
+  geom_point() +
+  scale_colour_brewer(palette = "Set1") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 10.5, linetype = 3) +
+  geom_vline(xintercept = 34.5, linetype = 3) +
+  facet_wrap(~ id, ncol = 2) +
+  labs(title = "Ratings over course of procedure",
+       subtitle = "Faceted by participant ID")
+
+ggplot(data = df_plot2) +
+  aes(x = trial_no,
+      y = rating,
+      colour = trial_type) +
+  geom_point() +
+  scale_colour_brewer(palette = "Set1") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 10.5, linetype = 3) +
+  geom_vline(xintercept = 34.5, linetype = 3) +
+  facet_wrap(~ id, ncol = 2) +
+  labs(title = "Ratings over course of procedure",
+       subtitle = "Faceted by participant ID")
+
+ggplot(data = df_plot3) +
+  aes(x = trial_no,
+      y = rating,
+      colour = trial_type) +
+  geom_point() +
+  scale_colour_brewer(palette = "Set1") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 10.5, linetype = 3) +
+  geom_vline(xintercept = 34.5, linetype = 3) +
+  facet_wrap(~ id, ncol = 2) +
+  labs(title = "Ratings over course of procedure",
+       subtitle = "Faceted by participant ID")
+
+ggplot(data = df_plot4) +
+  aes(x = trial_no,
+      y = rating,
+      colour = trial_type) +
+  geom_point() +
+  scale_colour_brewer(palette = "Set1") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 10.5, linetype = 3) +
+  geom_vline(xintercept = 34.5, linetype = 3) +
+  facet_wrap(~ id, ncol = 2) +
+  labs(title = "Ratings over course of procedure",
+       subtitle = "Faceted by participant ID")
+```
+
+## 2. Ratings provided by each participant of test (CS-UStest) trials only (therefore test phase only)
+
+```{r test_plots, include = TRUE}
+
+df_test <- df %>% filter(trial_type == "CSplus_UStest" | trial_type == "CSminus_UStest")
+
+dftest_plot1 <- df_test %>% filter(id < 23)
+dftest_plot2 <- df_test %>% filter(id > 23 & id < 42)
+dftest_plot3 <- df_test %>% filter(id > 41 & id < 64)
+dftest_plot4 <- df_test %>% filter(id > 64)
+
+ggplot(data = dftest_plot1) +
+  aes(x = trial_no,
+      y = rating,
+      colour = trial_type) +
+  geom_point() +
+  scale_colour_brewer(palette = "Set1") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 70.5, linetype = 3) +
+  geom_vline(xintercept = 34.5, linetype = 3) +
+  geom_vline(xintercept = 105.5, linetype = 3) +
+  facet_wrap(~ id, ncol =2) +
+  labs(title = "Ratings over course of test phases, UStest trials only",
+       subtitle = "Faceted by participant ID")
+
+ggplot(data = dftest_plot2) +
+  aes(x = trial_no,
+      y = rating,
+      colour = trial_type) +
+  geom_point() +
+  scale_colour_brewer(palette = "Set1") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 70.5, linetype = 3) +
+  geom_vline(xintercept = 34.5, linetype = 3) +
+  geom_vline(xintercept = 105.5, linetype = 3) +
+  facet_wrap(~ id, ncol =2) +
+  labs(title = "Ratings over course of test phases, UStest trials only",
+       subtitle = "Faceted by participant ID")
+
+ggplot(data = dftest_plot3) +
+  aes(x = trial_no,
+      y = rating,
+      colour = trial_type) +
+  geom_point() +
+  scale_colour_brewer(palette = "Set1") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 70.5, linetype = 3) +
+  geom_vline(xintercept = 34.5, linetype = 3) +
+  geom_vline(xintercept = 105.5, linetype = 3) +
+  facet_wrap(~ id, ncol =2) +
+  labs(title = "Ratings over course of test phases, UStest trials only",
+       subtitle = "Faceted by participant ID")
+
+ggplot(data = dftest_plot4) +
+  aes(x = trial_no,
+      y = rating,
+      colour = trial_type) +
+  geom_point() +
+  scale_colour_brewer(palette = "Set1") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 70.5, linetype = 3) +
+  geom_vline(xintercept = 34.5, linetype = 3) +
+  geom_vline(xintercept = 105.5, linetype = 3) +
+  facet_wrap(~ id, ncol =2) +
+  labs(title = "Ratings over course of test phases, UStest trials only",
+       subtitle = "Faceted by participant ID")
+```
+
+## 3. Ratings for each participant, looking at CS-UStest pairings as:
+(a) delivered (ignoring any mis-localisation of CSs)
+(b) perceived (considering how each CS was classified by the participant).
+
+```{r group_test_trials_actual}
+
+ggplot(data = dftest_plot1) +
+  aes(x = as.factor(trial_type),
+      y = rating,
+      colour = trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  facet_wrap(~ id) +
+  labs(title = "Ratings of test stimuli according to actual trial type",
+       subtitle = "Faceted by ID")
+
+ggplot(data = dftest_plot2) +
+  aes(x = as.factor(trial_type),
+      y = rating,
+      colour = trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  facet_wrap(~ id) +
+  labs(title = "Ratings of test stimuli according to actual trial type",
+       subtitle = "Faceted by ID")
+
+ggplot(data = dftest_plot3) +
+  aes(x = as.factor(trial_type),
+      y = rating,
+      colour = trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  facet_wrap(~ id) +
+  labs(title = "Ratings of test stimuli according to actual trial type",
+       subtitle = "Faceted by ID")
+
+ggplot(data = dftest_plot4) +
+  aes(x = as.factor(trial_type),
+      y = rating,
+      colour = trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  facet_wrap(~ id) +
+  labs(title = "Ratings of test stimuli according to actual trial type",
+       subtitle = "Faceted by ID")
+
+ggplot(data = dftest_plot1) +
+  aes(x = as.factor(perc_trial_type),
+      y = rating,
+      colour = perc_trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  facet_wrap(~ id) +
+  labs(title = "Ratings of test stimuli according to perceived trial type",
+       subtitle = "Faceted by ID")
+
+ggplot(data = dftest_plot2) +
+  aes(x = as.factor(perc_trial_type),
+      y = rating,
+      colour = perc_trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  facet_wrap(~ id) +
+  labs(title = "Ratings of test stimuli according to perceived trial type",
+       subtitle = "Faceted by ID")
+
+ggplot(data = dftest_plot3) +
+  aes(x = as.factor(perc_trial_type),
+      y = rating,
+      colour = perc_trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  facet_wrap(~ id) +
+  labs(title = "Ratings of test stimuli according to perceived trial type",
+       subtitle = "Faceted by ID")
+
+ggplot(data = dftest_plot4) +
+  aes(x = as.factor(perc_trial_type),
+      y = rating,
+      colour = perc_trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  facet_wrap(~ id) +
+  labs(title = "Ratings of test stimuli according to perceived trial type",
+       subtitle = "Faceted by ID")
+```
+
+4. Ratings for all participants, looking at CS-UStest pairing as 
+(a) delivered (ignoring any mis-localisation of CSs)
+(b) perceived (considering how each CS was classified by the participant).
+
+```{r }
+df_test %>% filter(!is.na(trial_type)) %>%
+ggplot(data = .) +
+  aes(x = as.factor(trial_type),
+      y = rating,
+      colour = trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  labs(title = "Ratings of test stimuli",
+       subtitle = "According to actual trial type")
+
+df_test %>% filter(!is.na(perc_trial_type)) %>%
+  ggplot(data = .) +
+  aes(x = as.factor(perc_trial_type),
+      y = rating,
+      colour = perc_trial_type) +
+  geom_jitter(height = 0) +
+  geom_boxplot() +
+  scale_colour_brewer(palette = "Set1") +
+  labs(title = "Ratings of test stimuli",
+       subtitle = "According to perceived trial type")
+```
+
+# Prediction intervals
+
+Here, we visualise the data using prediction intervals.  This is a statistically calculated range in which the rating of each CSminus-UStest is predicted to fall.  The question of interest is whether or not any CS+-UStest trials fall **outside** and **to the right of** that prediction interval.  If they do, it would indicate a statistical likelihood that that particular trial was experienced as more intense than might be expected on the basis of chance. 
+
+In order to assist with visualisation, trials that do fall **outside** the prediction interval are coloured BLUE.
+
+## Test trials
+First, we consider test trials as delivered (i.e. ignoring any mis-localisation by the participant).  Second, we consider test trials as perceived.  
+
+```{r prediction_delivered}
+
+# Prediction intervals for test trials as DELIVERED
+df_prediction <- df_test %>%
+  # Filter for CSminus_UStest
+  filter(trial_type == 'CSminus_UStest' & id != 23) %>%
+  # Calculate 95% prediction interval 
+  group_by(id) %>%
+  dplyr::summarise(lower_pi = mean(rating, na.rm = TRUE) - 1.96 * (sd(rating, na.rm = TRUE)),
+            upper_pi = mean(rating, na.rm = TRUE) + 1.96 * (sd(rating, na.rm = TRUE))) %>%
+  # Truncate PIs at +50 and -50
+  mutate(lower_pi = ifelse(lower_pi < -50,
+                           yes = -50,
+                           no = lower_pi),
+         upper_pi = ifelse(upper_pi > 50,
+                           yes = 50,
+                           no = upper_pi)) %>%
+  # Join back with df_test
+  left_join(df_test) %>%
+  # Is CSplus_UStest within the prediction interval
+  mutate(CC_effect = ifelse(rating > upper_pi,
+                               yes = 'yes',
+                               no = 'no')) %>%
+  # Filter for CSplus_UStest
+  filter(trial_type == 'CSplus_UStest') 
+
+ggplot(data = df_prediction) +
+  aes(x = as.factor(id),
+      y = rating) +
+  geom_jitter(aes(colour = CC_effect),
+             height = 0) +
+  geom_errorbar(aes(ymin = lower_pi,
+                    ymax = upper_pi)) +
+  ylim(-50, 50) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  scale_colour_brewer(palette = "Set1") +
+  coord_flip() +
+  labs(title = 'Prediction interval for CSminus_UStest trial ratings',
+       subtitle = 'Points are individual CSplus_UStest trial ratings',
+       y = 'FEST rating',
+       x = 'Participant ID')
+
+# Prediction intervals for test trials as PERCEIVED
+
+df_prediction_perc <- df_test %>%
+  filter(!is.na(perc_trial_type)) %>%
+  # Filter for CSminus_UStest
+  filter(perc_trial_type == 'CSminus_UStest' & id != 23 & id != 19) %>%
+  # Calculate 95% prediction interval 
+  group_by(id) %>%
+  summarise(lower_pi = mean(rating, na.rm = TRUE) - 1.96 * (sd(rating, na.rm = TRUE)),
+            upper_pi = mean(rating, na.rm = TRUE) + 1.96 * (sd(rating, na.rm = TRUE))) %>%
+  # Truncate PIs at +50 and -50
+  mutate(lower_pi = ifelse(lower_pi < -50,
+                           yes = -50,
+                           no = lower_pi),
+         upper_pi = ifelse(upper_pi > 50,
+                           yes = 50,
+                           no = upper_pi)) %>%
+  # Join back with df_test
+  left_join(df_test) %>%
+  # Is CSplus_UStest within the prediction interval
+  mutate(CC_effect = ifelse(rating > upper_pi,
+                            yes = 'yes',
+                            no = 'no')) %>%
+  # Filter for CSplus_UStest
+  filter(perc_trial_type == 'CSplus_UStest') 
+
+# Save file df_prediction_perc
+
+write_rds(x = df_prediction_perc,
+          path = '/Users/tory/Google Drive/Git/CC_threshold/Juliane_all_data/data/Juliane_raw_as_perc.rds')
+
+ggplot(data = df_prediction_perc) +
+  aes(x = as.factor(id),
+      y = rating) +
+  geom_jitter(aes(colour = CC_effect),
+              height = 0) +
+  geom_errorbar(aes(ymin = lower_pi,
+                    ymax = upper_pi)) +
+  ylim(-50, 50) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  scale_colour_brewer(palette = "Set1") +
+  coord_flip() +
+  labs(title = 'Prediction interval for ratings of trials perceived as CSminus_UStest ',
+       subtitle = 'Points are individual CSplus_UStest (percieved) trial ratings',
+       y = 'FEST rating',
+       x = 'Participant ID')
+```
+
+## Reinforced trials
+Now we consider prediction intervals for all reinforced (CSplus-UShigh and CSminus-USlow) trials.  We want to check that there are plenty of CSplus-UShigh trials that fall outside the prediction interval for the CSminus-USlow trials, in order to confirm that these two trial types were actually experienced differently. We also want the prediction intervals for CSminus-USlow trials NOT to cross zero (i.e. they were reliably non-painful).
+
+```{r prediction_perceived}
+
+# Prediction intervals for all reinforced (CS+/USH or CS-/USL) trials (as delivered)
+
+df_prediction_reinf <- df %>%
+  # Filter for CSminus_USlow
+  filter(trial_type == 'CSminus_USlow' & id != 23) %>%
+  # Calculate 95% prediction interval 
+  group_by(id) %>%
+  dplyr::summarise(lower_pi = mean(rating, na.rm = TRUE) - 1.96 * (sd(rating, na.rm = TRUE)),
+            upper_pi = mean(rating, na.rm = TRUE) + 1.96 * (sd(rating, na.rm = TRUE))) %>%
+  # Truncate PIs at +50 and -50
+  mutate(lower_pi = ifelse(lower_pi < -50,
+                           yes = -50,
+                           no = lower_pi),
+         upper_pi = ifelse(upper_pi > 50,
+                           yes = 50,
+                           no = upper_pi)) %>%
+  # Join back with df_test
+  left_join(df) %>%
+  # Is CSplus_UShigh within the prediction interval
+  mutate(diff_intensities = ifelse(rating > upper_pi,
+                            yes = 'yes',
+                            no = 'no')) %>%
+  # Filter for CSplus_UShigh
+  filter(trial_type == 'CSplus_UShigh') 
+
+ggplot(data = df_prediction_reinf) +
+  aes(x = as.factor(id),
+      y = rating) +
+  geom_jitter(aes(colour = diff_intensities),
+              height = 0) +
+  geom_errorbar(aes(ymin = lower_pi,
+                    ymax = upper_pi)) +
+  ylim(-50, 50) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  scale_colour_brewer(palette = "Set1") +
+  coord_flip() +
+  labs(title = 'Prediction interval for CSminus_USlow trial ratings',
+       subtitle = 'Points are individual CSplus_UShigh trial ratings',
+       y = 'FEST rating',
+       x = 'Participant ID')
+```
+
+### Interpretation: 
+Calibration was poor.  However, participants 11, 15, 26, 33, 50, 58, 61 and 78 have a prediction interval for their CS-/USlow trials that does not cross zero - i.e. good calibration.  Check for CC effect in above graphs.
+
+## Session information
+
+```{r session_info}
+sessionInfo()
+```

@@ -1,0 +1,15 @@
+version	timestamp	block number	trial number	lost msec	free VRAM	trial contents	boven	beneden	phase_	above	below	
+22261	Wed Nov 22 03:19:15 2017	3	1	8::4	3544.73		1	0	acq	2	
+22261	Wed Nov 22 03:19:20 2017	3	2	7::4	3544.73		0	1	acq		1	
+22261	Wed Nov 22 03:21:59 2017	6	1	7::4	3544.73		1	0	acq	3	
+22261	Wed Nov 22 03:22:05 2017	6	2	7::4	3544.73		0	1	acq		1	
+22261	Wed Nov 22 03:25:35 2017	9	1	7::4	3544.73		1	0	acq	2	
+22261	Wed Nov 22 03:25:40 2017	9	2	7::4	3544.73		0	1	acq		2	
+22261	Wed Nov 22 03:28:37 2017	12	1	7::4	3544.73		1	0	test	2	
+22261	Wed Nov 22 03:28:41 2017	12	2	7::4	3544.73		0	1	test		2	
+22261	Wed Nov 22 03:38:21 2017	15	1	8::4	3544.73		0	1	test		1	
+22261	Wed Nov 22 03:38:26 2017	15	2	6::3	3544.73		1	0	test	2	
+22261	Wed Nov 22 03:48:43 2017	18	1	7::4	3544.73		1	0	test	2	
+22261	Wed Nov 22 03:48:47 2017	18	2	7::4	3544.73		0	1	test		3	
+22261	Wed Nov 22 03:56:50 2017	20	1	7::4	3544.73		1	0	test	3	
+22261	Wed Nov 22 03:56:57 2017	20	2	7::4	3544.73		0	1	test		3	
