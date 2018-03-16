@@ -6,7 +6,7 @@
 
 # Load packages
 library(tidyverse)
-libarary(dplyr)
+library(dplyr)
 library(magrittr)
 library(ggplot2)
 library(tidyr)

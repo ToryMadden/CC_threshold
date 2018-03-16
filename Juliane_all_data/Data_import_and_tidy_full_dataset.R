@@ -200,6 +200,7 @@ df_all %<>%
 df_all %<>% group_by(id) %>% mutate(trial_no = row_number())
 
 df_all %<>% select(id,
+                   CSplus_location,
                    block_number,
                    trial_no,
                    trial_type,
