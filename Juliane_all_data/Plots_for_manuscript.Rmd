@@ -1,0 +1,207 @@
+---
+title: "Plots for manuscript"
+author: "Tory Madden"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output: 
+  html_document:
+    theme: yeti
+    hightlight: pygments
+    toc: true
+    toc_depth: 5
+    toc_float: true
+    code_folding: show
+---
+
+```{r setup, include = FALSE}
+# Load packages
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(RColorBrewer)
+library(ggplot2)
+
+# knitr setup
+knitr::opts_chunk$set(warning = FALSE,
+                      message = FALSE,
+                      fig.height = 8,
+                      fig.width = 8,
+                      fig.path = './figures/manuscript_plots/')
+```
+
+```{r data, include = TRUE}
+
+# Import data
+
+df_exp <- read_csv('/Users/tory/Google Drive/Git/CC_threshold/Juliane_all_data/data/R_data_complete_expectancies')
+```
+
+# Plot expectancy ratings
+
+## Figure 3a
+Produce single plot showing expectancy ratings by CS across the 3 phases of the experiment.  Use different colours and shapes for each CS and jitter the position of the error bars and their corresponding points and lines, so as to make them easier to distinguish.
+
+```{r plot, echo = TRUE}
+
+df_exp %<>% mutate(phase = case_when(
+    block == "BL_acq1" ~ "baseline",
+    block == "acq1_2" | block == "acq2_3" | block == "acq_test" ~ "acquisition",
+    block == "test1_2" | block == "test2_3" | block == "after_test3"  ~ "test"))
+
+df_exp_plot <- df_exp %>% 
+    group_by(phase, CS) %>%
+    summarise(mean = mean(rating, na.rm = TRUE),
+              se = sd(rating, na.rm = TRUE)/sqrt(n()))
+    
+df_exp_plot$phase <- factor(df_exp_plot$phase, levels = c("baseline", "acquisition", "test"))
+
+Figure_3a <- ggplot(data = df_exp_plot) +
+    aes(x = phase,
+        y = mean,
+        group = CS,
+        colour = CS) +
+    geom_point(position = position_dodge(0.1),
+               aes(shape = CS),
+               size = 3) +
+    scale_color_manual(name = "CS", values=c("blue", "red")) +
+    geom_errorbar(aes(ymin = mean-se,
+                      ymax = mean+se),
+                  width = 0.2,
+                  position = position_dodge(0.1)) +
+    geom_line(position = position_dodge(0.1)) +
+    scale_shape_discrete(solid = FALSE) +
+    scale_y_continuous(limits = c(0,10),
+                       breaks = c(0:10)) +
+    labs(x = "Phase",
+         y = "Expectancy ratings (mean, SE)") +
+  theme(legend.title = element_blank(),
+        legend.position = c(0.9,0.91),
+        panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(colour="grey", linetype = 3),
+        panel.border = element_rect(colour = "black", fill = NA))
+print(Figure_3a)
+    
+```
+
+## Figure 3b
+Produce single plot showing expectancy ratings by CS across the 3 phases of the experiment, by CS and by contingency awareness.  Use different shapes for each CS and different colours for the contingency awareness groups, and jitter the position of the error bars and their corresponding points and lines, so as to make them easier to distinguish.
+
+```{r Fig3b}
+
+# Add contingency awareness data to df_exp
+
+df_exp %<>% mutate(awareness = case_when(
+    id == 8 | id == 10 | id == 15 | id == 16 | id == 17 | id == 22 | id == 26 | id == 28 | id == 55 | id == 57 | id == 63 | id == 65 | id == 68 | id == 71 | id == 77 | id == 78 ~ "unaware",
+    id == 12 | id == 14 | id == 19 | id == 24 | id == 25 | id == 27 | id == 29 | id == 30 | id == 31 | id == 33 | id == 35 | id == 40 | id == 41 | id == 42 | id == 43 | id == 45 | id == 46 | id == 50 | id == 56 | id == 58 | id == 59 | id == 61 | id == 64 | id == 69 | id == 70 | id == 73 | id == 76 ~ "aware"
+))
+
+check_missing <- df_exp %>% filter(is.na(awareness))
+unique(check_missing$id)
+
+# Prepare data frame
+
+df_exp_plot3b <- df_exp %>% 
+    group_by(awareness, phase, CS) %>%
+    summarise(mean = mean(rating, na.rm = TRUE),
+              se = sd(rating, na.rm = TRUE)/sqrt(n())) %>%
+    filter(!is.na(awareness))
+    
+df_exp_plot3b %<>% mutate(plot_group = case_when(
+    awareness == "aware" & CS == "CSplus" ~ "Aware group, CS+",
+    awareness == "aware" & CS == "CSminus" ~ "Aware group, CS-",
+    awareness == "unaware" & CS == "CSplus" ~ "Unaware group, CS+",
+    awareness == "unaware" & CS == "CSminus" ~ "Unaware group, CS-"
+))
+
+df_exp_plot3b$phase <- factor(df_exp_plot$phase, levels = c("baseline", "acquisition", "test"))
+
+Figure_3b <- ggplot(data = df_exp_plot3b) +
+    aes(x = phase,
+        y = mean,
+        group = plot_group,
+        colour = awareness,
+        linetype = CS) +
+    geom_point(position = position_dodge(0.1),
+               aes(shape = CS),
+               size = 4) +
+    scale_color_manual(values=c("orange", "purple")) +
+    geom_errorbar(aes(ymin = mean-se,
+                      ymax = mean+se),
+                  width = 0.2,
+                  position = position_dodge(0.1)) +
+    geom_line(position = position_dodge(0.1)) +
+    scale_shape_discrete(solid = FALSE) +
+    scale_linetype_manual(values = c("dashed", "solid")) +
+    scale_y_continuous(limits = c(0,10),
+                       breaks = c(0:10)) +
+    labs(x = "Phase",
+         y = "Expectancy ratings (mean, SE)") +
+  theme(legend.title = element_blank(),
+        legend.position = c(0.9,0.86),
+        panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(colour="grey", linetype = 3),
+        panel.border = element_rect(colour = "black", fill = NA))
+print(Figure_3b)
+```
+
+# Plot intensity ratings
+
+## Figure 3b
+Exact mean intensity ratings (error bars = standard error) for the CS+/USP and CS-/USNP trials during acquisition and test phase.
+
+```{r Fig4b}
+
+# Prepare data frame
+
+# Import data
+
+df_ratings <- read_csv('/Users/tory/Google Drive/Git/CC_threshold/Juliane_all_data/data/R_data_complete_dataset_ratings') %>%
+    # Remove irrelevant rows
+    filter(trial_type == "CSplus_UShigh" | trial_type == "CSminus_USlow") %>%
+    # Change phase labelling
+    mutate(phase = case_when(
+    block_number == "acq1" | block_number == "acq2" | block_number == "acq3" ~ "acquisition",
+    block_number == "test1" | block_number == "test2" | block_number == "test3"  ~ "test"))
+
+# Prepare data frame
+
+df_plot4 <- df_ratings %>% 
+    group_by(phase, trial_type) %>%
+    summarise(mean = mean(rating, na.rm = TRUE),
+              se = sd(rating, na.rm = TRUE)/sqrt(n()))
+
+# Create plot
+
+Figure_4 <- ggplot(data = df_plot4) +
+    aes(x = phase,
+        y = mean,
+        group = trial_type,
+        linetype = trial_type) +
+    geom_point(aes(shape = trial_type),
+               size = 4) +
+    geom_errorbar(aes(ymin = mean-se,
+                      ymax = mean+se),
+                  width = 0.2) +
+    geom_line() +
+    scale_shape_discrete(solid = FALSE) +
+    scale_linetype_manual(values = c("dashed", "solid")) +
+    scale_y_continuous(limits = c(-50,50),
+                       breaks = c(-50,-40,-30,-20,-10,0,10,20,30,40,50)) +
+    geom_hline(yintercept = 0, linetype = 3) +
+    labs(x = "Phase",
+         y = "SPARS ratings (mean, SE)") +
+  theme(legend.title = element_blank(),
+        legend.position = c(0.87,0.91),
+        panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(colour="grey", linetype = 3),
+        panel.border = element_rect(colour = "black", fill = NA))
+print(Figure_4)
+
+```
+
+## Session information
+
+```{r session_info}
+sessionInfo()
+```
